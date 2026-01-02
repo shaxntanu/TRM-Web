@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface CoinFlipProps {
   isFlipping: boolean;
@@ -11,40 +11,49 @@ interface CoinFlipProps {
 
 export default function CoinFlip({ isFlipping, result, onFlipComplete }: CoinFlipProps) {
   const [showResult, setShowResult] = useState(false);
-  const [flipCount, setFlipCount] = useState(0);
+  const [animationKey, setAnimationKey] = useState(0);
+  const prevFlipping = useRef(false);
 
+  // Detect when isFlipping changes from false to true
   useEffect(() => {
-    if (isFlipping) {
-      setFlipCount((c) => c + 1);
+    if (isFlipping && !prevFlipping.current) {
+      // New flip started
+      setAnimationKey((k) => k + 1);
       setShowResult(false);
+
       const timer = setTimeout(() => {
         setShowResult(true);
         onFlipComplete?.();
       }, 1000);
+
+      prevFlipping.current = true;
       return () => clearTimeout(timer);
+    } else if (!isFlipping) {
+      prevFlipping.current = false;
     }
   }, [isFlipping, onFlipComplete]);
+
+  // Determine final rotation based on result (win = heads/green, loss = tails/red)
+  const finalRotation = result === 'loss' ? 1980 : 1800; // Extra 180 for loss to show red side
 
   return (
     <div className="relative flex flex-col items-center justify-center py-8">
       {/* Coin */}
       <motion.div
-        key={flipCount}
+        key={animationKey}
         className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full ${
           showResult && result === 'win' ? 'glow-green' : ''
         } ${showResult && result === 'loss' ? 'glow-red' : ''}`}
+        initial={{ rotateY: 0 }}
         animate={
-          isFlipping
-            ? {
-                rotateY: [0, 1800],
-                rotateX: [0, 180, 0],
-              }
-            : {}
+          isFlipping || showResult
+            ? { rotateY: finalRotation }
+            : { rotateY: 0 }
         }
-        transition={{ duration: 1, ease: 'easeInOut' }}
+        transition={{ duration: 1, ease: 'easeOut' }}
         style={{ transformStyle: 'preserve-3d' }}
       >
-        {/* Heads side (Win) */}
+        {/* Heads side (Win - Green) */}
         <div
           className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl"
           style={{ backfaceVisibility: 'hidden' }}
@@ -52,7 +61,7 @@ export default function CoinFlip({ isFlipping, result, onFlipComplete }: CoinFli
           {showResult && result === 'win' ? '✓' : '₹'}
         </div>
 
-        {/* Tails side (Loss) */}
+        {/* Tails side (Loss - Red) */}
         <div
           className="absolute inset-0 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-4xl shadow-xl"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
