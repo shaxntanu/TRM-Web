@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CoinFlipProps {
   isFlipping: boolean;
@@ -11,11 +11,11 @@ interface CoinFlipProps {
 
 export default function CoinFlip({ isFlipping, result, onFlipComplete }: CoinFlipProps) {
   const [showResult, setShowResult] = useState(false);
-  const flipCountRef = useRef(0);
+  const [flipCount, setFlipCount] = useState(0);
 
   useEffect(() => {
     if (isFlipping) {
-      flipCountRef.current += 1;
+      setFlipCount((c) => c + 1);
       setShowResult(false);
       const timer = setTimeout(() => {
         setShowResult(true);
@@ -29,7 +29,7 @@ export default function CoinFlip({ isFlipping, result, onFlipComplete }: CoinFli
     <div className="relative flex flex-col items-center justify-center py-8">
       {/* Coin */}
       <motion.div
-        key={flipCountRef.current}
+        key={flipCount}
         className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full ${
           showResult && result === 'win' ? 'glow-green' : ''
         } ${showResult && result === 'loss' ? 'glow-red' : ''}`}
